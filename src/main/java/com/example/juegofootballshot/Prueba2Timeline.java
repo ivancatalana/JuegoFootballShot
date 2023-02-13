@@ -37,7 +37,7 @@ public class Prueba2Timeline extends Application {
                 new KeyValue(rect.yProperty(), 400));
 
         timeline.getKeyFrames().add(end);
-
+        timeline.setAutoReverse(true);
         timeline.setOnFinished(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -45,12 +45,13 @@ public class Prueba2Timeline extends Application {
                         + "," + rect.getY() + ")");
             }
         });
-        timeline.play();
+
 
         vb.getChildren().add(rect);
 
         Scene scene = new Scene(vb, 500, 500);
         stage.setScene(scene);
+        timeline.play();
 
         stage.show();
     }

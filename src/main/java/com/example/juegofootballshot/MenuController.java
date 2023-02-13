@@ -19,7 +19,7 @@ public class MenuController {
     private GamePanel gamePanel;
     private MainApplication helloApplication;
     @FXML
-    protected void onJugarButtonClick() {
+    protected void onJugarButtonClick() throws InterruptedException {
 
         helloApplication.hideShowStage(false);
         gamePanel=new GamePanel();

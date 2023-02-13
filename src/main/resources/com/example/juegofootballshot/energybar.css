@@ -1,0 +1,12 @@
+.progress-bar {
+  -fx-accent: red;
+  -fx-background-color: green;
+}
+
+.progress-bar .track {
+  -fx-background-color: lightgrey;
+}
+
+.progress-bar .bar {
+  -fx-background-color: linear-gradient(to right, red 0%,yellow 35%,green 40%,yellow 65%, red 100%);
+}
