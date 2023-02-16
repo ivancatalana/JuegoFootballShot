@@ -1,22 +1,16 @@
 package com.example.juegofootballshot;
 
 import javafx.animation.*;
-import javafx.application.Application;
 import javafx.event.ActionEvent;
-import javafx.geometry.Insets;
-import javafx.geometry.Point2D;
-import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.shape.Shape;
+import javafx.scene.text.FontPosture;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.scene.Group;
@@ -29,12 +23,11 @@ import javafx.scene.text.FontWeight;
 import javafx.event.EventHandler;
 import javafx.scene.input.KeyEvent;
 import javafx.util.Duration;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
-import java.awt.event.ActionListener;
-import java.lang.reflect.RecordComponent;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Timer;
 
 // Collect the Money Bags!
 public class GamePanel {
@@ -52,7 +45,6 @@ public class GamePanel {
     Circle circle3;
     Timeline timelineCircle;
     Group root;
-    Group obstacles;
 
     ScaleTransition scaleTransition2;
 
@@ -75,35 +67,58 @@ public class GamePanel {
     Image imageSprite = new Image("messiSprite2.png", false);
     double width = imageSprite.getWidth();
     double height = imageSprite.getHeight();
-    boolean disparo;
-    Molino molino;
-    Circle circleM1;
-    Circle circleM2;
 
-    Sprite bullseye1;
-    Sprite bullseye2;
-    TranslateTransition translate ;
+    int puntos = 0;
+    boolean disparo = false;
+//Obstaculos Molino
     Circle circle4;
     Circle circle5;
-    double angle1 = 0;
-    double angle2 = 90;
-    double x1 = 860;
-    double x2 = 860;
-    boolean vidaMenys=false;
+    Circle obstacle3;
+    double angle1;
+    double angle2;
+    double angle3;
+    double x1;
+    double x2;
+    boolean vidaMenys = false;
     //Velocitat molino
-    double sKeyframeMolino;
-    Timeline timelineCircle2;
-    KeyFrame k=null;
+    double sKeyframeMolino = 150;
+    Timeline timelineCircle2 = new Timeline();
+    KeyFrame k = null;
 
     boolean molinoFinish = true;
+
+    double positionXb;
+    double positionYb;
+
+    int vidas = 1;
+
+    private String s = getClass().getClassLoader().getResource("shot-.mp3").toExternalForm();
+    private String s2 = getClass().getClassLoader().getResource("hitSound.mp3").toExternalForm();
+
+    private Media sound = new Media(s);
+    private Media sound2 = new Media(s2);
+
+    private MediaPlayer shotSound = new MediaPlayer(sound);
+
+    private MediaPlayer audioClip2 = new MediaPlayer(sound2);
+    private boolean hitMolino;
+    private Rectangle rectangle;
+    private Rectangle pressStart;
+    private int level = 0;
+    Stage theStageGamepanel;
+    MainApplication mainApplication;
+
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
     public void start(Stage theStage) throws InterruptedException {
-        molino = new Molino();
+        theStageGamepanel=theStage;
         theStage.setTitle("Consigue Acertar!");
         circle = new Circle(450, 500, 16, new ImagePattern(new Image("soccerball.png")));
         circle2 = new Circle(0, 300, 16);
         circle2.setFill(Color.TRANSPARENT);
         Pane pane = new Pane(circle);
-        Image earth = new Image("earth.png");
         disparo = false;
 
 
@@ -129,15 +144,20 @@ public class GamePanel {
 
         //Transicio de la pilota que dura 10 milisegons
         scaleTransition3 = new ScaleTransition(Duration.millis(10), circle);
+        rectangle = new Rectangle(200, 100, 500, 300);
+        rectangle.setFill(new ImagePattern(new Image("LevelOne.png")));
+        pressStart = new Rectangle(250, 400, 400, 100);
+        pressStart.setFill(new ImagePattern(new Image("spaceStart.png")));
 
-
-        // gc2.drawImage(new Image("pilota.png"),450,300);
 
         //Afegim al Grup els elements
         root.getChildren().add(canvas);
         root.getChildren().add(pane);
         root.getChildren().add(circle2);
         root.getChildren().add(canvasJug);
+        root.getChildren().add(rectangle);
+        root.getChildren().add(pressStart);
+
         canvasJug.toFront();
         powerBar();
         TranslateTransition tt = new TranslateTransition(Duration.seconds(8));
@@ -147,10 +167,7 @@ public class GamePanel {
         tt.setToX(900);
         tt.setCycleCount(Animation.INDEFINITE);
         tt.setAutoReverse(true);
-       // startObstacle();
-        obstacleMolino();
-        // showTargetMolino();
-        // molino.showTargetMolino(this);
+
 
 
 // Array de botones pulsados
@@ -158,16 +175,20 @@ public class GamePanel {
 
         theScene.setOnKeyPressed(evt -> {
             String code = evt.getCode().toString();
-            if (!input.contains(code))
-                //&& !input.equals(KeyCode.SPACE))
-                input.add(code);
 
-            if (evt.getCode() == KeyCode.SPACE) {
+            if (disparo == true) {
+            } else {
+                if (!input.contains(code))
+                    //&& !input.equals(KeyCode.SPACE))
+                    input.add(code);
 
-                circle2.setFill(Color.TRANSPARENT);
-                circle2.setRadius(16);
-                scoreInt += 1;
-                increaseCounter();
+                if (evt.getCode() == KeyCode.SPACE) {
+
+                    circle2.setFill(Color.TRANSPARENT);
+                    circle2.setRadius(16);
+                    scoreInt += 1;
+                    increaseCounter();
+                }
             }
 
 
@@ -181,33 +202,45 @@ public class GamePanel {
                         if (!input.equals(KeyCode.SPACE))
                             input.remove(code);
                         if (e.getCode() == KeyCode.SPACE) {
-                            if (disparo == true) {
-                                System.out.println("disparo = true ");
-                            } else {
-                                disparo = true;
+                            if (molinoFinish == false) {
+
+
                                 System.out.println(scoreInt + " score: Energycounter " + energyCounter);
                                 input.remove(code);
-
+                                positionXb = briefcase.getPositionX();
+                                positionYb = briefcase.getPositionY();
+                                // if (scoreInt>15&&scoreInt<30) {
+                                if (scoreInt < 15) positionYb = 450;
+                                else if (scoreInt > 26) positionYb = 100;
                                 showSprite(gc);
-                               // checkforCollisionMolino();
+
 
                                 //Temporizador para que la animacion llegue a la pelota
+
                                 Timeline contador1 = new Timeline(new KeyFrame(
                                         Duration.millis(800),
                                         acción ->
-                                                moveTo(briefcase.getPositionX(), briefcase.getPositionY(), 1)));
+                                                moveTo(positionXb, positionYb, 1)));
                                 contador1.play();
+
+                                Timeline contador2 = new Timeline(new KeyFrame(
+                                        Duration.millis(600),
+                                        acción ->
+                                                shotSound.play()));
+
+
+                                contador2.play();
+                                shotSound.stop();
+
                                 //Temporizador para que la pelota llegue al objetivo
                                 Timeline contador = new Timeline(new KeyFrame(
                                         Duration.seconds(2),
                                         acción ->
                                                 checkforCollisionMolino()));
 
-                              //  checkforCollision()));
                                 contador.play();
-                                //Temporizador para que la pelota llegue al objetivo Molino
 
-                                           //     checkforCollisionMolino();
+                                //     Ponemos la pelota en posicion despued de la animacion
                                 circle.setCenterX(450);
                                 circle.setCenterY(500);
 
@@ -215,18 +248,35 @@ public class GamePanel {
                                 scaleTransition3.setToX(1.5);
                                 scaleTransition3.play();
                                 disparo = false;
+                            } else {
+                                if (circle4 ==null) {
+                                    if (!vidaMenys) {
+                                        level += 1;
+                                        sKeyframeMolino -= 50;
+                                    }
+                                    vidaMenys = false;
+                                    rectangle.setFill(Color.TRANSPARENT);
+                                    pressStart.setFill(Color.TRANSPARENT);
 
+                                    obstacleMolino();
+                                }
                             }
                         }
 
                     }
                 });
         gc = canvas.getGraphicsContext2D();
-        Font theFont = Font.font("Helvetica", FontWeight.BOLD, 24);
+        Font theFont = Font.font("Comic Sans MS", FontWeight.BOLD, FontPosture.ITALIC, 36);
+        Font theFont2 = Font.font("Comic Sans MS",FontWeight.EXTRA_LIGHT, FontPosture.ITALIC,34);
+
         gc.setFont(theFont);
         gc.setFill(Color.BLUE);
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(1);
+        gc2.setFont(theFont2);
+        gc2.setFill(Color.ORANGE);
+        gc2.setStroke(Color.BLACK);
+        gc2.setLineWidth(1);
         Image messi = new Image("messi.png");
 
         Image image = new Image("objetivonaranja.png", 50, 50, false, false);
@@ -247,21 +297,22 @@ public class GamePanel {
 
 
                 // game logic
-
-                briefcase.setVelocity(0, 0);
-                if (input.contains("LEFT"))
-                    briefcase.addVelocity(-100, 0);
-
-
-                if (input.contains("RIGHT"))
-                    briefcase.addVelocity(100, 0);
-                if (input.contains("UP"))
-                    briefcase.addVelocity(0, -100);
+                if (disparo == true) {
+                } else {
+                    briefcase.setVelocity(0, 0);
+                    if (input.contains("LEFT"))
+                        briefcase.addVelocity(-100, 0);
 
 
-                if (input.contains("DOWN"))
-                    briefcase.addVelocity(0, 100);
+                    if (input.contains("RIGHT"))
+                        briefcase.addVelocity(100, 0);
+                    if (input.contains("UP"))
+                        briefcase.addVelocity(0, -100);
 
+
+                    if (input.contains("DOWN"))
+                        briefcase.addVelocity(0, 100);
+                }
                 briefcase.update(elapsedTime);
 
                 // collision detection
@@ -270,11 +321,16 @@ public class GamePanel {
 // renderizacion de los Graficos de la imagen de fondo y la porteria
 
                 gc.clearRect(0, 0, 900, 600);
+                gc2.clearRect(0, 0, 900, 600);
+
                 gc.drawImage(porteria, 0, 0);
-                briefcase.render(gc);
-                String pointsText = "Puntos: !" + (100 * scoreInt);
+                briefcase.render(gc2);
+                String pointsText = "Puntos: " + (100 * puntos);
                 gc.fillText(pointsText, 360, 36);
                 gc.strokeText(pointsText, 360, 36);
+                String vidasText = "Vidas: " + (vidas);
+                gc2.fillText(vidasText, 60, 36);
+                gc2.strokeText(vidasText, 60, 36);
                 gc2.save();
                 gc2.scale(0.3, 0.3);
                 gc2.drawImage(imageSprite, (index % NUM_SPRITES) * (width / NUM_SPRITES), 0, (width / NUM_SPRITES), height, posX, posY, (width / NUM_SPRITES), height);
@@ -294,6 +350,8 @@ public class GamePanel {
 
     }
 
+
+    //Metodos Para las colisiones
     void checkforCollision() {
 
         //Defino el circulo para ponerlo en la posicion del punto de mira.
@@ -304,6 +362,7 @@ public class GamePanel {
         if (circle2.intersects(circle3.getCenterX(), circle3.getCenterY(), circle3.getLayoutX(), circle3.getLayoutY())) {
 
             System.out.println("Collision");
+
             circle2.setRadius(32);
             circle2.setFill(new ImagePattern(new Image("explosion.png")));
 
@@ -315,17 +374,17 @@ public class GamePanel {
 // etc..
     }
 
-    void checkforCollisionMolino() {
-
-       //Defino el circulo para ponerlo en la posicion del punto de mira.
-      //  System.out.println("Diana1 position  Y "+ circle4.getCenterX()+" Y "+ circle4.getCenterY());
-       // System.out.println(briefcase.getPositionX() + briefcase.getBoundary().getWidth() / 2);
-        circle2.setCenterX(briefcase.getPositionX() + briefcase.getBoundary().getWidth() / 2);
-        circle2.setCenterY(briefcase.getPositionY() + briefcase.getBoundary().getHeight() / 2);
+    public void checkforCollisionMolino() {
+        //audioClip2.play();
+        hitMolino = false;
+        //Defino el circulo para ponerlo en la posicion del punto de mira.
+        circle2.setCenterX(positionXb + briefcase.getBoundary().getWidth() / 2);
+        circle2.setCenterY(positionYb + briefcase.getBoundary().getHeight() / 2);
 
         if (circle2.intersects(circle4.getCenterX(), circle4.getCenterY(), circle4.getLayoutX(), circle4.getLayoutY())) {
-
+            hitMolino = true;
             System.out.println("Collision");
+            puntos += 100;
             //molino.circle1.setRadius(32);
             circle4.setFill(new ImagePattern(new Image("explosion.png")));
             circle4.setStroke(Color.BLACK);
@@ -337,6 +396,10 @@ public class GamePanel {
 
         } else if (circle2.intersects(circle5.getCenterX(), circle5.getCenterY(), circle5.getLayoutX(), circle5.getLayoutY())) {
             System.out.println("Collision");
+            hitMolino = true;
+
+            puntos += 100;
+
             // molino.circle2.setRadius(32);
             circle5.setFill(new ImagePattern(new Image("explosion.png")));
             circle5.setStroke(Color.BLACK);
@@ -345,93 +408,91 @@ public class GamePanel {
                     Duration.seconds(2),
                     acción ->
 
-            circle5.setFill(Color.TRANSPARENT)));
+                            circle5.setFill(Color.TRANSPARENT)));
 
             contador.play();
 
+        } else if (circle2.intersects(obstacle3.getCenterX(), obstacle3.getCenterY(), obstacle3.getLayoutX(), obstacle3.getLayoutY())) {
+            System.out.println("Collision");
+            hitMolino = true;
+
+            puntos += 100;
+
+            // molino.circle2.setRadius(32);
+            obstacle3.setFill(new ImagePattern(new Image("explosion.png")));
+            obstacle3.setStroke(Color.BLACK);
+
+            Timeline contador = new Timeline(new KeyFrame(
+                    Duration.seconds(2),
+                    acción ->
+
+                            obstacle3.setFill(Color.TRANSPARENT)));
+
+            contador.play();
+            // audioClip2.stop();
         }
-        else if (molinoFinish==true) obstacleMolino();
-
-
 
 // etc..
     }
 
-    public void gameLoopTimeline(Circle gc) {
-        Timeline gameLoop = new Timeline();
-        double x = 0;
-        double y = 0;
-        gameLoop.setCycleCount(Timeline.INDEFINITE);
 
-        final long timeStart = System.currentTimeMillis();
-
-        KeyFrame kf = new KeyFrame(
-                Duration.seconds(0.017),                // 60 FPS
-                new EventHandler<ActionEvent>() {
-                    public void handle(ActionEvent ae) {
-                        double t = (System.currentTimeMillis() - timeStart) / 1000.0;
-
-                        double x = 232 + 128 * Math.cos(t);
-                        double y = 232 + 128 * Math.sin(t);
-
-                    }
-                });
-        gc.setLayoutX(x);
-        gc.setLayoutY(y);
-
-        gameLoop.getKeyFrames().add(kf);
-        gameLoop.play();
-    }
-
+    //Movimiento de la pelota
     public void moveTo(double x, double y, double duration) {
-        if (disparo == false) {
-            scaleTransition2 = new ScaleTransition(Duration.seconds(1), circle);
-            scaleTransition2.setFromX(1.5);
-            scaleTransition2.setFromY(1.5);
-            scaleTransition2.setToY(0.3);
-            scaleTransition2.setToX(0.3);
-            scaleTransition2.play();
-            KeyValue xValue = new KeyValue(circle.centerXProperty(), x);
-            KeyValue yValue = new KeyValue(circle.centerYProperty(), y);
-            KeyValue effect = new KeyValue(circle.centerYProperty(), y, new Interpolator() {
-                @Override
-                protected double curve(double t) {
-                    double menost = 0.5;
-                    if (briefcase.getPositionX() > 450) menost = 0.6;
+        //      if (disparo == false) {
+        //if (scoreInt >25 && scoreInt < 17) {
+        //  System.out.println("disparo = Fallo ");
+        //}
+        //  else{
+        double potencia = 1.6;
+        scaleTransition2 = new ScaleTransition(Duration.seconds(1), circle);
+        scaleTransition2.setFromX(1.5);
+        scaleTransition2.setFromY(1.5);
+        scaleTransition2.setToY(0.3);
+        scaleTransition2.setToX(0.3);
+        scaleTransition2.play();
+        KeyValue xValue = new KeyValue(circle.centerXProperty(), x);
+        KeyValue yValue = new KeyValue(circle.centerYProperty(), y);
+        KeyValue effect = new KeyValue(circle.centerYProperty(), y, new Interpolator() {
+            @Override
+            protected double curve(double t) {
+                double menost = 0.5;
+                if (briefcase.getPositionX() > 450) menost = 0.6;
 
-                    // parabola with zeros at t=0 and t=1 and a maximum of 1 at t=0.5
-                    return -4 * (t - menost) * (t - menost) + 1.6;
+                // parabola with zeros at t=0 and t=1 and a maximum of 1 at t=0.5
+                return -4 * (t - menost) * (t - menost) + potencia;
+            }
+        });
+
+        KeyFrame frame = new KeyFrame(Duration.seconds(duration), xValue, effect);
+
+        Timeline timeline = new Timeline();
+        timeline.setCycleCount(1);
+
+
+        timeline.getKeyFrames().add(frame);
+
+
+        timeline.play();
+        timeline.setOnFinished(evtf -> {
+                    scaleTransition3.setFromX(0.5);
+                    scaleTransition3.setFromY(0.5);
+
+                    scaleTransition3.setToX(1.5);
+                    scaleTransition3.setToY(1.5);
+                    scaleTransition3.play();
+                    circle.setCenterX(450);
+                    circle.setCenterY(500);
+                    scoreInt = 0;
+                    energyCounter = -5;
+                    increaseCounter();
                 }
-            });
-
-            KeyFrame frame = new KeyFrame(Duration.seconds(duration), xValue, effect);
-
-            Timeline timeline = new Timeline();
-            timeline.setCycleCount(1);
+        );
 
 
-            timeline.getKeyFrames().add(frame);
-
-
-            timeline.play();
-            timeline.setOnFinished(evtf -> {
-                        scaleTransition3.setFromX(0.5);
-                        scaleTransition3.setFromY(0.5);
-
-                        scaleTransition3.setToX(1.5);
-                        scaleTransition3.setToY(1.5);
-                        scaleTransition3.play();
-                        circle.setCenterX(450);
-                        circle.setCenterY(500);
-                        scoreInt = 0;
-                        energyCounter = -5;
-                        increaseCounter();
-                    }
-            );
-
-        }
+        //}
     }
 
+    //Metodo de un solo elemento como blanco
     public void startObstacle() {
         if (timelineCircle != null) timelineCircle.stop();
         if (circle3 != null) root.getChildren().remove(circle3);
@@ -441,8 +502,6 @@ public class GamePanel {
 
         double speed = 1;
         double radius = 1;
-        //  angle=0;
-      //  TranslateTransition translateTransition = new TranslateTransition(10,)
 
         timelineCircle = new Timeline(new KeyFrame(Duration.millis(50), e -> {
             angle = (angle + speed) % 360;
@@ -464,6 +523,8 @@ public class GamePanel {
 
         timelineCircle.play();
     }
+
+    //Barra de potencia de disparo
 
     public void powerBar() {
         Image zero = new Image("zero.png");
@@ -518,85 +579,15 @@ public class GamePanel {
 
     }
 
-    public void showTargetMolino() {
-        Group molino = new Group();
-        Rectangle body = new Rectangle();
-        body.setX(100.0f);
-        body.setY(300.0f);
-        body.setWidth(30);
-        body.setHeight(95);
-        body.setFill(Color.PURPLE);
-        body.setStroke(Color.BLACK);
-
-        // create the sails of the mill
-        Rectangle sail1 = new Rectangle();
-        sail1.setX(75);
-        sail1.setY(300.0f);
-        sail1.setWidth(80.0f);
-        sail1.setHeight(5.0f);
-        sail1.setFill(Color.RED);
-        sail1.setStroke(Color.BLACK);
-// create a group for the circles
-        Group circles = new Group();
-
-// create two circles
-       circleM1 = new Circle(75, 300, 16);
-       circleM2 = new Circle(155, 300, 16);
-        bullseye1 = new Sprite();
-        bullseye2= new Sprite();
-
-// set the fill color for the circles
-        circleM1.setFill(new ImagePattern(new Image("bullseye.png")));
-        circleM2.setFill(new ImagePattern(new Image("bullseye.png")));
-        bullseye1.setImage(new Image("bullseye.png"));
-        bullseye2.setImage(new Image("bullseye.png"));
-        bullseye1.setPosition(75,300);
-
-// add the circles to the group
-       // circles.getChildren().add(circleM1);
-        circles.getChildren().add(bullseye1.getNodeRepresentation());
-        circles.getChildren().add(circleM2);
-        molino.getChildren().addAll(body, sail1, circles);
-
-// add the group to the root
-
-        RotateTransition rotate2 = new RotateTransition(Duration.seconds(4), sail1);
-        rotate2.setByAngle(360);
-        rotate2.setCycleCount(Timeline.INDEFINITE);
-        rotate2.setAutoReverse(false);
-
-
-        // add the shapes to the group
-
-        root.getChildren().add(molino);
-        canvasJug.toFront();
-
-        // create the rotation animation for the sails
-        RotateTransition rotate1 = new RotateTransition(Duration.seconds(4), circles);
-        rotate1.setByAngle(360);
-        rotate1.setCycleCount(Timeline.INDEFINITE);
-        rotate1.setAutoReverse(false);
-
-
-        // create the translation animation for the mill
-         translate = new TranslateTransition(Duration.seconds(25), molino);
-        translate.setFromX(900);
-        translate.setToX(-200);
-        translate.setCycleCount(Timeline.INDEFINITE);
-        // add the shapes to the group
-
-
-        // start the rotation and translation animations
-        rotate1.play();
-        rotate2.play();
-        translate.play();
-    }
-
+    //Contador de la powerBar
     private void increaseCounter() {
-        energyCounter = Math.min(200, energyCounter + 5);
-        energyRect.setX(energyCounter);
+        if (!molinoFinish) {
+            energyCounter = Math.min(200, energyCounter + 5);
+            energyRect.setX(energyCounter);
+        }
     }
 
+    //imagen jugador
     public void showSprite(GraphicsContext gc) {
         if (animation != null) animation.stop();
         KeyFrame frame = new KeyFrame(Duration.millis(150), new EventHandler<ActionEvent>() {
@@ -616,37 +607,16 @@ public class GamePanel {
         animation.setCycleCount(Timeline.INDEFINITE);
         animation.getKeyFrames().add(frame);
         animation.play();
-
     }
 
-    private void startTimeline() {
- /*       Timeline animation2 = new Timeline();
-        animation2.setCycleCount(Timeline.INDEFINITE);
-        KeyFrame frame = new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                gc.clearRect(300, 300, 300, 500);
-                gc.drawImage(image, (index % NUM_SPRITES) * (width / NUM_SPRITES), 0, (width / NUM_SPRITES), height, posX, posY, (width / NUM_SPRITES), height);
-                index++;
-                if (index == NUM_SPRITES) {
-                    index = 0;
-                    animation.stop();
 
-                }
-            }
-        });
-        animation2.getKeyFrames().add(frame);
-
-        animation2.play();
-
-  */
-        gc.drawImage(imageSprite, 300, 300, 50, 50);
-    }
-    public void obstacleMolino()  {
-        vidaMenys=false;
-      //  while (!molinoFinish)wait();
-        molinoFinish=false;
-        sKeyframeMolino=100;
+    public void obstacleMolino() {
+        angle1 = 0;
+        angle2 = 90;
+        angle3 = 180;
+        x1 = 860;
+        x2 = 860;
+        molinoFinish = false;
         Rectangle body = new Rectangle();
         body.setX(845);
         body.setY(300.0f);
@@ -657,30 +627,20 @@ public class GamePanel {
         Group molinoSprite = new Group();
 
         Circle sail1 = new Circle(860, 300, 30);
-       // sail1.setLayoutX(850);
-        //sail1.setLayoutY(300.0f);
-     //   sail1.s(90.0f);
-       // sail1.setHeight(5.0f);
         sail1.setFill(Color.RED);
         sail1.setStroke(Color.BLACK);
 
-        // create the rotation animation for the sails
-        RotateTransition rotate1 = new RotateTransition(Duration.seconds(8), sail1);
-        rotate1.setByAngle(360);
-        rotate1.setCycleCount(Timeline.INDEFINITE);
-        rotate1.setAutoReverse(false);
-
-
-
-        //if (timelineCircle != null) timelineCircle.stop();
-       // if (circle3 != null) root.getChildren().remove(circle3);
         circle4 = new Circle(860, 250, 20);
-        circle5 = new Circle(800, 250, 20);
+        circle5 = new Circle(830, 300, 20);
+        obstacle3 = new Circle(800, 250, 20);
+
         circle4.setFill(new ImagePattern(new Image("bullseye.png")));
         circle5.setFill(new ImagePattern(new Image("bullseye.png")));
+        obstacle3.setFill(new ImagePattern(new Image("bullseye.png")));
         //circle4.setLayoutX(-40);
         circle4.setManaged(true);
         circle5.setManaged(true);
+        obstacle3.setManaged(true);
 
         double radius1 = 50;
         double radius2 = 50;
@@ -689,93 +649,167 @@ public class GamePanel {
         double speed2 = 2;
 
         //  angle=0;
-                 k=new KeyFrame(Duration.millis(sKeyframeMolino), e -> {
-                     angle1 = (angle1 + (speed1)) % 360;
-                     angle2 = (angle2 + (speed2)) % 360;
+        k = new KeyFrame(Duration.millis(sKeyframeMolino), e -> {
+            angle1 = (angle1 + (speed1)) % 360;
+            angle2 = (angle2 + (speed2)) % 360;
+            angle3 = (angle3 + (speed2)) % 360;
 
-                     x1 -= speed1;
-                     x2 -= speed1;
 
-                     circle4.setCenterX(circle4.getCenterX() - 1);
-                     circle5.setCenterX(circle5.getCenterX() - 1);
+            x1 -= speed1;
+            x2 -= speed1;
 
-                     body.setX(body.getX() - speed1);
-                     sail1.setCenterX(sail1.getCenterX() - speed1);
+            circle4.setCenterX(circle4.getCenterX() - 1);
+            circle5.setCenterX(circle5.getCenterX() - 1);
+            obstacle3.setCenterX(obstacle3.getCenterX() - 1);
 
-                     circle4.setCenterX(x1 + radius2 * Math.cos(Math.toRadians(angle2)));
-                     circle4.setCenterY(300 + radius2 * Math.sin(Math.toRadians(angle2)));
-                     // sail1.setX(body.getX() * Math.cos(Math.toRadians(angle2)));
-                     //sail1.setY(body.getY() * Math.sin(Math.toRadians(angle2)));
+            body.setX(body.getX() - speed1);
+            sail1.setCenterX(sail1.getCenterX() - speed1);
 
-                     circle5.setCenterX(x2 + radius2 * Math.cos(Math.toRadians(angle1)));
-                     circle5.setCenterY(300 + radius2 * Math.sin(Math.toRadians(angle1)));
-           /*
-            if (x1 < -100 || x2 < -100) {
-                x1 = 860;
-                x2 = 860;
-                body.setX(850);
-                sail1.setCenterX(860);
+            circle4.setCenterX(x1 + radius2 * Math.cos(Math.toRadians(angle2)));
+            circle4.setCenterY(300 + radius2 * Math.sin(Math.toRadians(angle2)));
+
+
+            circle5.setCenterX(x2 + radius2 * Math.cos(Math.toRadians(angle1)));
+            circle5.setCenterY(300 + radius2 * Math.sin(Math.toRadians(angle1)));
+
+            obstacle3.setCenterX(x2 + radius2 * Math.cos(Math.toRadians(angle3)));
+            obstacle3.setCenterY(300 + radius2 * Math.sin(Math.toRadians(angle3)));
+
+            if (circle5.getFill() == Color.TRANSPARENT && circle4.getFill() == Color.TRANSPARENT && obstacle3.getFill() == Color.TRANSPARENT) {
+                molinoFinish = true;
+                timelineCircle2.setRate(6);
+
+                if (level == 1) {
+                    rectangle.setFill(new ImagePattern(new Image("Level2.png")));
+
+
+                } else if (level == 2) {
+                    rectangle.setFill(new ImagePattern(new Image("Level3.png")));
+
+
+                }
+            } else if (level == 3) {
+                rectangle.setFill(new ImagePattern(new Image("win.png")));
+                Timeline contadorM = new Timeline(new KeyFrame(
+                        Duration.seconds(2),
+                        acción ->
+                                mainApplication.hideShowStage(true)));
+
+
+                contadorM.play();
+
+
             }
 
-            */
-                     if (circle4.getCenterX() < -20) {
-                         if (!vidaMenys) System.out.println("Vida menys");
-                         vidaMenys = true;
-                         circle4.setCenterX(860);
-                     } else if (circle5.getCenterX() < -20) {
-                         if (!vidaMenys) System.out.println("Vida menys");
-                         vidaMenys = true;
-                         circle5.setCenterX(860);
-                     } else if (circle5.getFill() == Color.TRANSPARENT && circle4.getFill() == Color.TRANSPARENT) {
-                         molinoFinish = true;
-
-                         timelineCircle2.setRate(4);
-                         System.out.println(sail1.getCenterX());
-
-//                if (circle5.getCenterX() < 0 && circle4.getCenterX() < 0) {
-                    /*
-                    System.out.println(sail1.getCenterX());
+            if (circle4.getCenterX() < -20 || circle5.getCenterX() < -20 || obstacle3.getCenterX() < -20) {
+                if (molinoFinish) {
+                    root.getChildren().remove(body);
+                    root.getChildren().remove(sail1);
+                    root.getChildren().remove(circle4);
+                    root.getChildren().remove(circle5);
+                    root.getChildren().remove(obstacle3);
                     timelineCircle2.stop();
-                    timelineCircle2.setRate(1);
-                    circle4.setFill(new ImagePattern(new Image("bullseye.png")));
-                    circle5.setFill(new ImagePattern(new Image("bullseye.png")));
-                    molinoFinish=true;
+                    circle4=null;
+                    pressStart.setFill(new ImagePattern(new Image("spaceStart.png")));
+
+                } else if (!vidaMenys) {
+                    System.out.println("Vida menys");
+                    molinoFinish = true;
+                    vidas -= 1;
+                    vidaMenys = true;
+                    root.getChildren().remove(body);
+                    root.getChildren().remove(sail1);
+                    root.getChildren().remove(circle4);
+                    root.getChildren().remove(circle5);
+                    root.getChildren().remove(obstacle3);
+                    timelineCircle2.stop();
+                    circle4=null;
+                    pressStart.setFill(new ImagePattern(new Image("spaceStart.png")));
+                    if (vidas==0) {
+                        rectangle.setFill(new ImagePattern(new Image("gver.png")));
+                        System.out.println(100 * puntos);
+                        int puntosFinales= 100 * puntos;
+
+                        Timeline contador = new Timeline(new KeyFrame(
+                                Duration.seconds(2),
+                                acción ->
+                                        theStageGamepanel.hide()));
 
 
-                     */
-  /*
-                    try {
-                       // timelineCircle2.stop();
+                        contador.play();
+                        Timeline contadorM = new Timeline(new KeyFrame(
+                                Duration.seconds(2),
+                                acción ->
+                                        mainApplication.hideShowStage(true)));
 
-                        molinoFinish=true;
 
-                    } catch (InterruptedException ex) {
-                        throw new RuntimeException(ex);
+                        contadorM.play();
+                        Timeline contadorS = new Timeline(new KeyFrame(
+                                Duration.seconds(1.5),
+                                acción ->
+                                        showStatsName(puntosFinales)));
+
+
+                        contadorS.play();
+
+
+
+                    }
+
+                    else if (level == 1) {
+                        rectangle.setFill(new ImagePattern(new Image("Level1.png")));
+
+
+                    } else if (level == 2) {
+                        rectangle.setFill(new ImagePattern(new Image("Level2.png")));
+
+
+                    }else if (level == 3) {
+                        rectangle.setFill(new ImagePattern(new Image("Level3.png")));
+
+
                     }
 
 
-   */
-
-
-
+                }
 
 
             }
-           molinoFinish=true;
+            if (hitMolino == true) {
+                audioClip2.play();
+                audioClip2.setCycleCount(1);
+                audioClip2.stop();
+
+            }
+            hitMolino = false;
         });
         root.getChildren().add(body);
         root.getChildren().add(sail1);
         root.getChildren().add(circle4);
         root.getChildren().add(circle5);
+        root.getChildren().add(obstacle3);
         //molinoSprite.getChildren().add(circle5);
         //root.getChildren().add(molinoSprite);
         canvasJug.toFront();
         timelineCircle2 = new Timeline(k);
 
-        // root.getChildren().add(rect);
         timelineCircle2.setCycleCount(Timeline.INDEFINITE);
         timelineCircle2.play();
-       // rotate1.play();
+        // rotate1.play();
 
     }
+    public void setMain(MainApplication m) {
+        mainApplication = m;
+    }
+    public void showStatsName(int puntos){
+        int puntosStat=puntos;
+        System.out.println(puntos);
+        ControllerStats controllerStats=new ControllerStats();
+        try {
+            controllerStats.showStatsName(puntosStat);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

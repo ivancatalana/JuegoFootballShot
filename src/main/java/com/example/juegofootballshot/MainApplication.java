@@ -11,7 +11,7 @@ public class MainApplication extends Application {
     public Stage getStage() {
         return stage;
     }
-
+    MenuController controller;
     private Stage stage ;
     @Override
     public void start(Stage s) throws IOException {
@@ -19,7 +19,7 @@ public class MainApplication extends Application {
         GamePanel gamePanel;
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("pantalla-inicio.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 900, 600);
-        MenuController controller= (MenuController) fxmlLoader.getController();
+        controller= (MenuController) fxmlLoader.getController();
         controller.setMain(this);
         stage.setTitle("Football Shot");
         stage.setScene(scene);
@@ -31,7 +31,11 @@ public class MainApplication extends Application {
         boolean showStage = s;
         if (showStage==false)
         stage.hide();
-        else stage.show();
+        else {
+            stage.show();
+            controller.audioClip2.stop();
+            controller.audioClip.play();
+        }
     }
     public static void main(String[] args) {
         launch();

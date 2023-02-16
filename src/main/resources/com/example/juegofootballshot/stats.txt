@@ -1,0 +1,15 @@
+Joel,1,30000
+pepe,4,10000
+popis,4,60000
+jordi,1,0
+Pol,1,0
+io,2,0
+ivanMMM,1,0
+Ivaoo,1,0
+ivan,1,0
+iMMMMMMM,1,0
+ivaaabb,1,0
+ivv,1,0
+ded,1,0
+,1,0
+iv,1,0
