@@ -11,11 +11,14 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
+import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.File;
@@ -25,13 +28,23 @@ import java.io.IOException;
 import java.util.*;
 
 public class ControllerStats {
+    int puntuacion;
+
     private static Stage secondaryStage;
     @FXML
     private TextField textFieldWinner;
-   // @FXML
-  //  private void initialize() {
-    //    textFieldWinner.setText(Controller.textLastWinnerName);
-    //}
+    @FXML
+    private Text textPoints =  new Text();
+    @FXML
+    private void initialize() {
+        //textFieldWinner.setText(textLastWinnerName);
+
+        textPoints.setText(""+GamePanel.puntos);
+
+
+        System.out.println(" menuController" + GamePanel.puntos);
+
+    }
 
     public int getPuntuacion() {
         return puntuacion;
@@ -41,21 +54,21 @@ public class ControllerStats {
         this.puntuacion = puntuacion;
     }
 
-    int puntuacion;
     public void showStatsName (int puntuacionPartida) throws IOException {
-        setPuntuacion(puntuacionPartida);
+        puntuacion=puntuacionPartida;
         System.out.println("A la Classe ControllerStats = "+puntuacionPartida);
         FXMLLoader loader = new FXMLLoader(MainApplication.class.getResource("stats-name.fxml"));
         VBox statsName = loader.load();
-
+        textPoints.setText(""+puntuacionPartida);
         statsName.setBackground(
                 Background.fill(new LinearGradient(
                 0, 0, 1, 1, true,                      //sizing
                 CycleMethod.NO_CYCLE,                  //cycling
                 new Stop(0, Color.web("#F6F2E5")),     //colors
                 new Stop(1, Color.web("#7B7A79")))));
-        Scene scene = new Scene(statsName,320,240);
+        Scene scene = new Scene(statsName,200,300);
         secondaryStage = new Stage();
+        secondaryStage.initModality(Modality.APPLICATION_MODAL);
         secondaryStage.setScene(scene);
      //   secondaryStage.setTitle(Controller.textLastWinner.getText());
         secondaryStage.show();
@@ -96,13 +109,13 @@ public class ControllerStats {
             for(Persona p:personas){
                 if (td.equals(p.getName())){
                     p.setPartidasJugadas(p.getPartidasJugadas()+1);
-                    if(p.getPuntuacionMaxima()<puntuacion)
-                    p.setPuntuacionMaxima(puntuacion);
+                    if(p.getPuntuacionMaxima()<GamePanel.puntos)
+                    p.setPuntuacionMaxima(GamePanel.puntos);
                     exist=true;
                 }
             }
             if (!exist){
-                personas.add(new Persona(td,1,puntuacion));
+                personas.add(new Persona(td,1,GamePanel.puntos));
             }
 
             for (Persona p:personas){
@@ -119,7 +132,6 @@ public class ControllerStats {
     }
 
     public void showStatsTable2() {
-
 
         ArrayList<Persona>personas=new ArrayList<>();
         List<List<String>> records = new ArrayList<List<String>>();
@@ -215,5 +227,17 @@ public class ControllerStats {
         Scene scene = new  Scene(anchorPane, 750, 450);
         s.setScene(scene);
         s.show();
-}
+
+        //Cierra la ventana al pulsar Start
+        scene.setOnKeyReleased(evt -> {
+            if (evt.getCode() == KeyCode.SPACE) {
+               s.close();
+            }
+        });
+
+}/*
+    public void setMenuController(MenuController mC) {
+        m = mC;
+    }
+    */
 }

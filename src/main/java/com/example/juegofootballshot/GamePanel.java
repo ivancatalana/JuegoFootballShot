@@ -38,8 +38,7 @@ public class GamePanel {
 
     Circle circle2;
     ScaleTransition scaleTransition3;
-    IntValue score;
-
+    private IntValue score;
     int scoreInt;
     double angle;
     Circle circle3;
@@ -67,10 +66,10 @@ public class GamePanel {
     Image imageSprite = new Image("messiSprite2.png", false);
     double width = imageSprite.getWidth();
     double height = imageSprite.getHeight();
-
-    int puntos = 0;
-    boolean disparo = false;
-//Obstaculos Molino
+    public static double speed1 = 1;
+    static int puntos;
+    boolean disparo;
+    //Obstaculos Molino
     Circle circle4;
     Circle circle5;
     Circle obstacle3;
@@ -81,17 +80,16 @@ public class GamePanel {
     double x2;
     boolean vidaMenys = false;
     //Velocitat molino
-    double sKeyframeMolino = 150;
+    double sKeyframeMolino = 200;
     Timeline timelineCircle2 = new Timeline();
     KeyFrame k = null;
-
     boolean molinoFinish = true;
 
     double positionXb;
     double positionYb;
 
-    int vidas = 1;
-
+    int vidas = 3;
+    boolean pressed = false;
     private String s = getClass().getClassLoader().getResource("shot-.mp3").toExternalForm();
     private String s2 = getClass().getClassLoader().getResource("hitSound.mp3").toExternalForm();
 
@@ -108,19 +106,20 @@ public class GamePanel {
     Stage theStageGamepanel;
     MainApplication mainApplication;
 
+
     public void setLevel(int level) {
         this.level = level;
     }
 
     public void start(Stage theStage) throws InterruptedException {
-        theStageGamepanel=theStage;
+        puntos = 0;
+        theStageGamepanel = theStage;
         theStage.setTitle("Consigue Acertar!");
         circle = new Circle(450, 500, 16, new ImagePattern(new Image("soccerball.png")));
         circle2 = new Circle(0, 300, 16);
         circle2.setFill(Color.TRANSPARENT);
         Pane pane = new Pane(circle);
         disparo = false;
-
 
         // Barra de fuerza
 
@@ -130,14 +129,14 @@ public class GamePanel {
         energyBar2.setPrefWidth(200);
         energyBar2.getStylesheets().add(getClass().getResource("energybar.css").toExternalForm());
 
-
+// Afegim la escena al grup root
         root = new Group();
-        Group root2 = new Group();
         theScene = new Scene(root);
         theStage.setScene(theScene);
-        Image porteria = new Image("porteria.jpg");
-//Creacio dels Canvas i del GraphicsContext
 
+        //Creacio dels Canvas i del GraphicsContext
+
+        Image porteria = new Image("porteria.jpg");
         canvas = new Canvas(900, 600);
         canvasJug = new Canvas(900, 600);
         gc2 = canvasJug.getGraphicsContext2D();
@@ -168,30 +167,25 @@ public class GamePanel {
         tt.setCycleCount(Animation.INDEFINITE);
         tt.setAutoReverse(true);
 
-
-
 // Array de botones pulsados
         ArrayList<String> input = new ArrayList<String>();
 
         theScene.setOnKeyPressed(evt -> {
             String code = evt.getCode().toString();
 
-            if (disparo == true) {
-            } else {
-                if (!input.contains(code))
-                    //&& !input.equals(KeyCode.SPACE))
-                    input.add(code);
 
-                if (evt.getCode() == KeyCode.SPACE) {
-
-                    circle2.setFill(Color.TRANSPARENT);
-                    circle2.setRadius(16);
-                    scoreInt += 1;
-                    increaseCounter();
-                }
+            if (!input.contains(code)) {
+                if (!disparo) input.add(code);
+                else pressed = true;
             }
+            if (evt.getCode() == KeyCode.SPACE) {
+                circle2.setFill(Color.TRANSPARENT);
+                circle2.setRadius(16);
+                scoreInt += 1;
+                increaseCounter();
+                disparo = true;
 
-
+            }
         });
 
 
@@ -199,11 +193,11 @@ public class GamePanel {
                 new EventHandler<KeyEvent>() {
                     public void handle(KeyEvent e) {
                         String code = e.getCode().toString();
-                        if (!input.equals(KeyCode.SPACE))
+                        if (!input.equals(KeyCode.SPACE)) {
                             input.remove(code);
+                        }
                         if (e.getCode() == KeyCode.SPACE) {
                             if (molinoFinish == false) {
-
 
                                 System.out.println(scoreInt + " score: Energycounter " + energyCounter);
                                 input.remove(code);
@@ -212,6 +206,9 @@ public class GamePanel {
                                 // if (scoreInt>15&&scoreInt<30) {
                                 if (scoreInt < 15) positionYb = 450;
                                 else if (scoreInt > 26) positionYb = 100;
+                                else if (pressed) positionXb = 900;
+
+
                                 showSprite(gc);
 
 
@@ -227,8 +224,6 @@ public class GamePanel {
                                         Duration.millis(600),
                                         acción ->
                                                 shotSound.play()));
-
-
                                 contador2.play();
                                 shotSound.stop();
 
@@ -240,7 +235,7 @@ public class GamePanel {
 
                                 contador.play();
 
-                                //     Ponemos la pelota en posicion despued de la animacion
+                                //     Ponemos la pelota en posicion después de la animacion
                                 circle.setCenterX(450);
                                 circle.setCenterY(500);
 
@@ -248,13 +243,15 @@ public class GamePanel {
                                 scaleTransition3.setToX(1.5);
                                 scaleTransition3.play();
                                 disparo = false;
+                                pressed = false;
                             } else {
-                                if (circle4 ==null) {
+                                if (circle4 == null) {
                                     if (!vidaMenys) {
                                         level += 1;
-                                        sKeyframeMolino -= 50;
+                                        sKeyframeMolino -= 30;
                                     }
                                     vidaMenys = false;
+                                    disparo = false;
                                     rectangle.setFill(Color.TRANSPARENT);
                                     pressStart.setFill(Color.TRANSPARENT);
 
@@ -266,16 +263,16 @@ public class GamePanel {
                     }
                 });
         gc = canvas.getGraphicsContext2D();
-        Font theFont = Font.font("Comic Sans MS", FontWeight.BOLD, FontPosture.ITALIC, 36);
-        Font theFont2 = Font.font("Comic Sans MS",FontWeight.EXTRA_LIGHT, FontPosture.ITALIC,34);
+        Font theFont = Font.font("Impact", FontWeight.BOLD, FontPosture.REGULAR, 46);
+        Font theFont2 = Font.font("Comic Sans MS", FontWeight.EXTRA_LIGHT, FontPosture.ITALIC, 34);
 
         gc.setFont(theFont);
-        gc.setFill(Color.BLUE);
-        gc.setStroke(Color.BLACK);
+        gc.setFill(Color.GREEN);
+        gc.setStroke(Color.RED);
         gc.setLineWidth(1);
         gc2.setFont(theFont2);
         gc2.setFill(Color.ORANGE);
-        gc2.setStroke(Color.BLACK);
+        gc2.setStroke(Color.RED);
         gc2.setLineWidth(1);
         Image messi = new Image("messi.png");
 
@@ -287,8 +284,6 @@ public class GamePanel {
 
         LongValue lastNanoTime = new LongValue(System.nanoTime());
 
-        score = new IntValue(0);
-
         // Animation timer que mueve el punto de mira y acelera en una posicion concreta al mover el teclado
         new AnimationTimer() {
             public void handle(long currentNanoTime) {
@@ -297,21 +292,23 @@ public class GamePanel {
 
 
                 // game logic
-                if (disparo == true) {
-                } else {
-                    briefcase.setVelocity(0, 0);
+                briefcase.setVelocity(0, 0);
+
+                if (disparo != true) {
                     if (input.contains("LEFT"))
                         briefcase.addVelocity(-100, 0);
 
-
                     if (input.contains("RIGHT"))
                         briefcase.addVelocity(100, 0);
+
                     if (input.contains("UP"))
                         briefcase.addVelocity(0, -100);
 
-
                     if (input.contains("DOWN"))
                         briefcase.addVelocity(0, 100);
+
+                } else {
+
                 }
                 briefcase.update(elapsedTime);
 
@@ -325,12 +322,12 @@ public class GamePanel {
 
                 gc.drawImage(porteria, 0, 0);
                 briefcase.render(gc2);
-                String pointsText = "Puntos: " + (100 * puntos);
-                gc.fillText(pointsText, 360, 36);
-                gc.strokeText(pointsText, 360, 36);
+                String pointsText = "Points:" + (puntos);
+                gc.fillText(pointsText, 360, 42);
+                gc.strokeText(pointsText, 361, 42);
                 String vidasText = "Vidas: " + (vidas);
                 gc2.fillText(vidasText, 60, 36);
-                gc2.strokeText(vidasText, 60, 36);
+                gc2.strokeText(vidasText, 61, 36);
                 gc2.save();
                 gc2.scale(0.3, 0.3);
                 gc2.drawImage(imageSprite, (index % NUM_SPRITES) * (width / NUM_SPRITES), 0, (width / NUM_SPRITES), height, posX, posY, (width / NUM_SPRITES), height);
@@ -351,55 +348,34 @@ public class GamePanel {
     }
 
 
-    //Metodos Para las colisiones
-    void checkforCollision() {
+    //Metodo Para las colisiones
 
-        //Defino el circulo para ponerlo en la posicion del punto de mira.
-
-        circle2.setCenterX(briefcase.getPositionX() + briefcase.getBoundary().getWidth() / 2);
-        circle2.setCenterY(briefcase.getPositionY() + briefcase.getBoundary().getHeight() / 2);
-
-        if (circle2.intersects(circle3.getCenterX(), circle3.getCenterY(), circle3.getLayoutX(), circle3.getLayoutY())) {
-
-            System.out.println("Collision");
-
-            circle2.setRadius(32);
-            circle2.setFill(new ImagePattern(new Image("explosion.png")));
-
-            startObstacle();
-
-        }
-
-
-// etc..
-    }
 
     public void checkforCollisionMolino() {
-        //audioClip2.play();
-        hitMolino = false;
+
         //Defino el circulo para ponerlo en la posicion del punto de mira.
         circle2.setCenterX(positionXb + briefcase.getBoundary().getWidth() / 2);
         circle2.setCenterY(positionYb + briefcase.getBoundary().getHeight() / 2);
-
-        if (circle2.intersects(circle4.getCenterX(), circle4.getCenterY(), circle4.getLayoutX(), circle4.getLayoutY())) {
+       // hitMolino = false;
+        if (circle2.intersects(circle4.getCenterX(), circle4.getCenterY(), circle4.getLayoutX(), circle4.getLayoutY())&&circle4.getFill()!=Color.TRANSPARENT) {
             hitMolino = true;
             System.out.println("Collision");
+            System.out.println(hitMolino);
             puntos += 100;
             //molino.circle1.setRadius(32);
             circle4.setFill(new ImagePattern(new Image("explosion.png")));
             circle4.setStroke(Color.BLACK);
+
             Timeline contador = new Timeline(new KeyFrame(
                     Duration.seconds(2),
                     acción ->
                             circle4.setFill(Color.TRANSPARENT)));
             contador.play();
 
-        } else if (circle2.intersects(circle5.getCenterX(), circle5.getCenterY(), circle5.getLayoutX(), circle5.getLayoutY())) {
+        } else if (circle2.intersects(circle5.getCenterX(), circle5.getCenterY(), circle5.getLayoutX(), circle5.getLayoutY())&&circle5.getFill()!=Color.TRANSPARENT) {
             System.out.println("Collision");
             hitMolino = true;
-
             puntos += 100;
-
             // molino.circle2.setRadius(32);
             circle5.setFill(new ImagePattern(new Image("explosion.png")));
             circle5.setStroke(Color.BLACK);
@@ -412,7 +388,7 @@ public class GamePanel {
 
             contador.play();
 
-        } else if (circle2.intersects(obstacle3.getCenterX(), obstacle3.getCenterY(), obstacle3.getLayoutX(), obstacle3.getLayoutY())) {
+        } else if (circle2.intersects(obstacle3.getCenterX(), obstacle3.getCenterY(), obstacle3.getLayoutX(), obstacle3.getLayoutY())&&obstacle3.getFill()!=Color.TRANSPARENT) {
             System.out.println("Collision");
             hitMolino = true;
 
@@ -429,10 +405,18 @@ public class GamePanel {
                             obstacle3.setFill(Color.TRANSPARENT)));
 
             contador.play();
-            // audioClip2.stop();
+        }
+        if (hitMolino == true) {
+            soundCollision();
+            Timeline contadorSound = new Timeline(new KeyFrame(
+                    Duration.millis(100),
+                    acción ->
+                            soundCollision()));
+            contadorSound.play();
+
+
         }
 
-// etc..
     }
 
 
@@ -492,39 +476,18 @@ public class GamePanel {
         //}
     }
 
-    //Metodo de un solo elemento como blanco
-    public void startObstacle() {
-        if (timelineCircle != null) timelineCircle.stop();
-        if (circle3 != null) root.getChildren().remove(circle3);
-        circle3 = new Circle(900, 250, 20);
-        circle3.setFill(new ImagePattern(new Image("sun.png")));
-        circle3.setManaged(true);
+public void soundCollision(){
 
-        double speed = 1;
-        double radius = 1;
-
-        timelineCircle = new Timeline(new KeyFrame(Duration.millis(50), e -> {
-            angle = (angle + speed) % 360;
-            circle3.setCenterX(circle3.getCenterX() - speed);
-
-            circle3.setCenterY(circle3.getCenterY() + radius * Math.cos(Math.toRadians(angle)));
-            if (circle3.getCenterX() < 0) {
-                System.out.println("Vida menys");
-                circle3.setCenterX(900);
-            }
+    audioClip2.play();
+    audioClip2.setCycleCount(1);
+    audioClip2.stop();
+    hitMolino = false;
 
 
-        }));
-        root.getChildren().add(circle3);
-
-
-        // root.getChildren().add(rect);
-        timelineCircle.setCycleCount(Timeline.INDEFINITE);
-
-        timelineCircle.play();
-    }
+}
 
     //Barra de potencia de disparo
+
 
     public void powerBar() {
         Image zero = new Image("zero.png");
@@ -567,12 +530,7 @@ public class GamePanel {
         energyBarPane = new Pane();
         energyBarPane.setPrefSize(200, 40);
         energyBarPane.getChildren().addAll(zeroPower, energyBarBackground, colorBars, energyRect, hundredPower);
-
-        //   Button btnIncreaseCounter = new Button("Aumentar contador");
-        // btnIncreaseCounter.setOnAction(e -> increaseCounter());
-
         root.getChildren().addAll(energyBarPane);
-        //, btnIncreaseCounter);
         energyBarPane.setLayoutX(370);
         energyBarPane.setLayoutY(570);
 
@@ -624,8 +582,6 @@ public class GamePanel {
         body.setHeight(95);
         body.setFill(Color.PURPLE);
         body.setStroke(Color.BLACK);
-        Group molinoSprite = new Group();
-
         Circle sail1 = new Circle(860, 300, 30);
         sail1.setFill(Color.RED);
         sail1.setStroke(Color.BLACK);
@@ -637,7 +593,6 @@ public class GamePanel {
         circle4.setFill(new ImagePattern(new Image("bullseye.png")));
         circle5.setFill(new ImagePattern(new Image("bullseye.png")));
         obstacle3.setFill(new ImagePattern(new Image("bullseye.png")));
-        //circle4.setLayoutX(-40);
         circle4.setManaged(true);
         circle5.setManaged(true);
         obstacle3.setManaged(true);
@@ -645,14 +600,15 @@ public class GamePanel {
         double radius1 = 50;
         double radius2 = 50;
 
-        double speed1 = 2;
-        double speed2 = 2;
+
+        //double speed2 = 3;
 
         //  angle=0;
         k = new KeyFrame(Duration.millis(sKeyframeMolino), e -> {
+
             angle1 = (angle1 + (speed1)) % 360;
-            angle2 = (angle2 + (speed2)) % 360;
-            angle3 = (angle3 + (speed2)) % 360;
+            angle2 = (angle2 + (speed1)) % 360;
+            angle3 = (angle3 + (speed1)) % 360;
 
 
             x1 -= speed1;
@@ -677,28 +633,36 @@ public class GamePanel {
 
             if (circle5.getFill() == Color.TRANSPARENT && circle4.getFill() == Color.TRANSPARENT && obstacle3.getFill() == Color.TRANSPARENT) {
                 molinoFinish = true;
-                timelineCircle2.setRate(6);
+                timelineCircle2.setRate(10);
 
                 if (level == 1) {
                     rectangle.setFill(new ImagePattern(new Image("Level2.png")));
 
-
                 } else if (level == 2) {
                     rectangle.setFill(new ImagePattern(new Image("Level3.png")));
 
+                } else if (level == 3 && molinoFinish) {
+                    rectangle.setFill(new ImagePattern(new Image("win.png")));
 
+                    Timeline contador = new Timeline(new KeyFrame(
+                            Duration.seconds(2),
+                            acción ->
+                                    theStageGamepanel.hide()));
+                    contador.play();
+
+                    Timeline contadorM = new Timeline(new KeyFrame(
+                            Duration.seconds(2),
+                            acción ->
+                                    mainApplication.hideShowStage(true)));
+                    contadorM.play();
+
+                    Timeline contadorS = new Timeline(new KeyFrame(
+                            Duration.seconds(2),
+                            acción ->
+                                    showStatsName(puntos)));
+                    contadorS.play();
+                    timelineCircle2.stop();
                 }
-            } else if (level == 3) {
-                rectangle.setFill(new ImagePattern(new Image("win.png")));
-                Timeline contadorM = new Timeline(new KeyFrame(
-                        Duration.seconds(2),
-                        acción ->
-                                mainApplication.hideShowStage(true)));
-
-
-                contadorM.play();
-
-
             }
 
             if (circle4.getCenterX() < -20 || circle5.getCenterX() < -20 || obstacle3.getCenterX() < -20) {
@@ -709,7 +673,7 @@ public class GamePanel {
                     root.getChildren().remove(circle5);
                     root.getChildren().remove(obstacle3);
                     timelineCircle2.stop();
-                    circle4=null;
+                    circle4 = null;
                     pressStart.setFill(new ImagePattern(new Image("spaceStart.png")));
 
                 } else if (!vidaMenys) {
@@ -723,40 +687,35 @@ public class GamePanel {
                     root.getChildren().remove(circle5);
                     root.getChildren().remove(obstacle3);
                     timelineCircle2.stop();
-                    circle4=null;
+                    circle4 = null;
                     pressStart.setFill(new ImagePattern(new Image("spaceStart.png")));
-                    if (vidas==0) {
+                    if (vidas == 0) {
                         rectangle.setFill(new ImagePattern(new Image("gver.png")));
                         System.out.println(100 * puntos);
-                        int puntosFinales= 100 * puntos;
+                        int puntosFinales = 100 * puntos;
 
                         Timeline contador = new Timeline(new KeyFrame(
                                 Duration.seconds(2),
                                 acción ->
                                         theStageGamepanel.hide()));
 
-
                         contador.play();
+
                         Timeline contadorM = new Timeline(new KeyFrame(
                                 Duration.seconds(2),
                                 acción ->
                                         mainApplication.hideShowStage(true)));
 
-
                         contadorM.play();
+
                         Timeline contadorS = new Timeline(new KeyFrame(
-                                Duration.seconds(1.5),
+                                Duration.seconds(2),
                                 acción ->
                                         showStatsName(puntosFinales)));
 
 
                         contadorS.play();
-
-
-
-                    }
-
-                    else if (level == 1) {
+                    } else if (level == 1) {
                         rectangle.setFill(new ImagePattern(new Image("Level1.png")));
 
 
@@ -764,52 +723,39 @@ public class GamePanel {
                         rectangle.setFill(new ImagePattern(new Image("Level2.png")));
 
 
-                    }else if (level == 3) {
+                    } else if (level == 3) {
                         rectangle.setFill(new ImagePattern(new Image("Level3.png")));
-
 
                     }
 
-
                 }
 
-
             }
-            if (hitMolino == true) {
-                audioClip2.play();
-                audioClip2.setCycleCount(1);
-                audioClip2.stop();
-
-            }
-            hitMolino = false;
         });
         root.getChildren().add(body);
         root.getChildren().add(sail1);
         root.getChildren().add(circle4);
         root.getChildren().add(circle5);
         root.getChildren().add(obstacle3);
-        //molinoSprite.getChildren().add(circle5);
-        //root.getChildren().add(molinoSprite);
         canvasJug.toFront();
         timelineCircle2 = new Timeline(k);
-
         timelineCircle2.setCycleCount(Timeline.INDEFINITE);
         timelineCircle2.play();
-        // rotate1.play();
 
     }
+
     public void setMain(MainApplication m) {
         mainApplication = m;
     }
-    public void showStatsName(int puntos){
-        int puntosStat=puntos;
+
+    public void showStatsName(int puntos) {
+        int puntosStat = puntos;
         System.out.println(puntos);
-        ControllerStats controllerStats=new ControllerStats();
+        ControllerStats controllerStats = new ControllerStats();
         try {
             controllerStats.showStatsName(puntosStat);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-
 }
