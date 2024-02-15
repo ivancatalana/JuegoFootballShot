@@ -2,7 +2,7 @@
 
 <h1 align="center"> JuegoFootballShot </h1>
 
-Joc amb java FX de futbol
+Joc amb java FX de encertar els obstacles amb una pilota de futbol
 
 <p align="center">
   <img src="https://github.com/ivancatalana/JuegoFootballShot/blob/f9e3870feba16b41d40c4be15b91465c3d3c9252/Captura%20de%20pantalla%202024-02-16%20002538.png?raw=true" alt="Image" width="600">
