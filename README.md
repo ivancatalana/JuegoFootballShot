@@ -4,16 +4,16 @@
 
 Joc amb java FX de encertar els obstacles amb una pilota de futbol
 
-<p align="center">
+<p align="left">
   <img src="https://github.com/ivancatalana/JuegoFootballShot/blob/f9e3870feba16b41d40c4be15b91465c3d3c9252/Captura%20de%20pantalla%202024-02-16%20002538.png?raw=true" alt="Image" width="400">
 </p>
-<p align="center">
+<p align="right">
   <img src="https://raw.githubusercontent.com/ivancatalana/JuegoFootballShot/f9e3870feba16b41d40c4be15b91465c3d3c9252/Captura%20de%20pantalla%202024-02-16%20002357.png" alt="Image" width="400">
 </p>
 <p align="center">
   <img src="https://github.com/ivancatalana/JuegoFootballShot/blob/f9e3870feba16b41d40c4be15b91465c3d3c9252/Captura%20de%20pantalla%202024-02-16%20002638.png?raw=true" alt="Image" width="400">
 </p>
-<p align="center">
+<p align="left">
   <img src="https://github.com/ivancatalana/JuegoFootballShot/blob/master/Captura%20de%20pantalla%202024-02-16%20002612.png?raw=true" alt="Image" width="400">
 </p>
 
