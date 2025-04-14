@@ -20,3 +20,5 @@ Joc amb java FX de encertar els obstacles amb una pilota de futbol
 Video amb el joc en moviment compartit a GoogleDrive
 
 https://drive.google.com/file/d/1e5X-OxcdaBdHUl0NWTcrP2PpaKt6iBIG/view?usp=sharing
+
+
